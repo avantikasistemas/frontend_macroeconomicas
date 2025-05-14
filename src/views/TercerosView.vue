@@ -1,6 +1,6 @@
 <template>
     <LayoutView>
-        <h3>Subsectores</h3>
+        <h3>Terceros</h3>
   
         <div class="container">
             <div class="form-container">
@@ -25,6 +25,15 @@
                         </select>
                         <p v-if="!sector && mostrarErrores" class="error-text">Este campo es obligatorio.</p>
                     </div>
+
+                    <!-- SUBSECTOR -->
+                    <!-- <div class="form-group">
+                        <label>Sub Sector:</label>
+                        <select class="input-field" v-model="subsector">
+                            <option :value="null">Seleccione...</option>
+                            <option v-for="sec in list_subsectores" :value="sec.concepto_12">{{ sec.descripcion }}</option>
+                        </select>
+                    </div> -->
                     <button type="submit" class="submit-button">Buscar</button>
                 </form>
             </div>
@@ -37,20 +46,24 @@
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>DESCRIPCIÓN</th>
+                            <th>AÑO</th>
+                            <th>NIT</th>
+                            <th>NOMBRE</th>
                             <th>PORCENTAJE (%)</th>
                             <th>FECHA CREACIÓN</th>
                             <th>ACCIONES</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-if="list_subsectores.length === 0">
+                        <tr v-if="list_clientes.length === 0">
                             <td colspan="5" class="no-registros">No hay registros disponibles</td>
                         </tr>
-                        <tr v-else v-for="reg in list_subsectores" :key="reg.id">
+                        <tr v-else v-for="reg in list_clientes" :key="reg.id">
                             <td>{{ reg.id }}</td>
-                            <td>{{ reg.subsector_nombre }}</td>
-                            <td>{{ reg.subsector_porcentaje }}%</td>
+                            <td>{{ reg.anio }}</td>
+                            <td>{{ reg.nit_real }}</td>
+                            <td>{{ reg.nombre }}</td>
+                            <td>{{ reg.porcentaje_cliente }}%</td>
                             <td>{{ reg.created_at }}</td>
                             <td style="text-align: center;">
                                 <i class="fa-regular fa-clipboard" style="cursor: pointer;" @click="abrirModalEdicion(reg)"></i>
@@ -76,15 +89,15 @@
                                 <label>Año:</label>
                                 <input type="text" class="input-field" v-model="registroSeleccionado.anio" disabled />
                             </div>
-                            <!-- Código (solo lectura) -->
+                            <!-- NIT (solo lectura) -->
                             <div class="form-group">
-                                <label>Código:</label>
-                                <input type="text" class="input-field" v-model="registroSeleccionado.subsector" disabled />
+                                <label>NIT:</label>
+                                <input type="text" class="input-field" v-model="registroSeleccionado.nit_real" disabled />
                             </div>
-                            <!-- Descripción (solo lectura) -->
+                            <!-- Nombre (solo lectura) -->
                             <div class="form-group">
-                                <label>Descripción:</label>
-                                <input type="text" class="input-field" v-model="registroSeleccionado.subsector_nombre" disabled />
+                                <label>Nombre:</label>
+                                <input type="text" class="input-field" v-model="registroSeleccionado.nombre" disabled />
                             </div>
                             <!-- Porcentaje (editable) -->
                             <div class="form-group" :class="{ 'error': porcentajeErrorEdicion }">
@@ -92,8 +105,8 @@
                                 <input 
                                     type="text" 
                                     class="input-field" 
-                                    v-model="registroSeleccionado.subsector_porcentaje" 
-                                    @input="validarDecimalEdicion('subsector_porcentaje')" 
+                                    v-model="registroSeleccionado.porcentaje_cliente" 
+                                    @input="validarDecimalEdicion('porcentaje_cliente')" 
                                 />
                                 <p v-if="porcentajeErrorEdicion" class="error-text">Debe ser un número menor o igual a 100 con máximo 2 decimales.</p>
                             </div>
@@ -105,7 +118,7 @@
                             type="button" 
                             class="btn btn-primary update-button" 
                             @click="actualizarRegistro"
-                            :disabled="porcentajeErrorEdicion || !registroSeleccionado.subsector_porcentaje"
+                            :disabled="porcentajeErrorEdicion || !registroSeleccionado.porcentaje_cliente"
                         >
                             Actualizar
                         </button>
@@ -164,7 +177,8 @@ import { Modal } from 'bootstrap';
 const router = useRouter();
 
 const anio = ref("");
-const sector = ref("");
+const sector = ref(null);
+const subsector = ref(null);
 const sector_porcentaje_response = ref(0);
 
 const modalInstance = ref(null);
@@ -182,6 +196,7 @@ const lista_registros = ref([]);
 const list_anios = ref([]);
 const list_sectores = ref([]);
 const list_subsectores = ref([]);
+const list_clientes = ref([]);
 const registroSeleccionado = ref({});
 
 const obtenerAnios = async () => {
@@ -226,10 +241,10 @@ const obtenerSectores = async () => {
   }
 };
 
-const obtenerSubsectores = async () => {
+const obtenerclientes = async () => {
   try {
     const response = await axios.post(
-      `${apiUrl}/obtener_subsectores_insertados`, 
+      `${apiUrl}/obtener_clientes`, 
       {
         anio: anio.value,
         sector: sector.value
@@ -242,7 +257,7 @@ const obtenerSubsectores = async () => {
     );
 
     if (response.status === 200) {
-        list_subsectores.value = response.data.data;
+        list_clientes.value = response.data.data;
     }
   } catch (error) {
     console.error("Error al consultar los datos:", error);
@@ -262,7 +277,7 @@ const validarFormulario = () => {
         return; // Detener el envío si hay errores
     }
 
-    obtenerSubsectores(); // Llamar a la función original si todo está correcto
+    obtenerclientes(); // Llamar a la función original si todo está correcto
 };
   
 const abrirModalEdicion = (registro) => {
@@ -271,7 +286,7 @@ const abrirModalEdicion = (registro) => {
 };
 
 function validarDecimalEdicion(campo) {
-    if (campo !== 'subsector_porcentaje') return; // Validar solo el campo 'subsector_porcentaje'
+    if (campo !== 'porcentaje_cliente') return; // Validar solo el campo 'porcentaje_cliente'
 
     let valor = registroSeleccionado.value[campo];
 
@@ -308,7 +323,7 @@ const actualizarRegistro = async () => {
 
     try {
         const response = await axios.post(
-            `${apiUrl}/actualizar_subsectores`, 
+            `${apiUrl}/actualizar_cliente`, 
             registroSeleccionado.value,
             {
                 headers: {
@@ -321,7 +336,7 @@ const actualizarRegistro = async () => {
             msg.value = response.data.message || "Registro actualizado correctamente.";
             modalEditarInstance.value.hide();
             modalInstance.value.show();
-            await obtenerSubsectores(); // Recargar la lista de registros
+            await obtenerclientes(); // Recargar la lista de registros
         }
     } catch (error) {
         console.error("Error al actualizar el registro:", error);
@@ -339,6 +354,7 @@ onMounted(() => {
     // Cargar registros al inicio
     obtenerAnios();
     obtenerSectores();
+    // obtenerclientes();
 });
   
 </script>

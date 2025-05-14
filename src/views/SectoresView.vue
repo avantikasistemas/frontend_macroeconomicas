@@ -270,7 +270,7 @@ const cargarDatos = async () => {
 // ✅ Función para guardar la información
 const guardarDatos = async () => {
     // Mostrar en consola el año seleccionado y el listado de sectores
-    
+    console.log(crecimientoSeleccionado.value);
     try {
         const response = await axios.post(
             `${apiUrl}/guardar_valores`, {
@@ -278,7 +278,8 @@ const guardarDatos = async () => {
                 sectores: list_sectores.value.map(sector => ({
                     concepto: sector.concepto_12,
                     porcentaje: sector.porcentaje_sector
-                }))
+                })),
+                crecimiento_avantika: crecimientoSeleccionado.value
             },
             {
                 headers: {
