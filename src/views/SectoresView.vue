@@ -159,6 +159,14 @@
               </div>
           </div>
       </div>
+
+    <!-- Overlay de carga -->
+    <div v-if="loading" class="loading-overlay">
+        <div class="spinner-border text-light" role="status">
+            <span class="visually-hidden"></span>
+        </div>
+        <p class="mt-2 text-light">{{ loading_msg }}</p>
+    </div>
       
   </LayoutView>
 </template>
@@ -195,6 +203,9 @@ const lista_registros = ref([]);
 const list_sectores = ref([]);
 const list_anios_para_sectores = ref([]);
 const registroSeleccionado = ref({});
+
+const loading = ref(false);
+const loading_msg = ref('');
 
 const crecimientoAvantikaErrorEdicion = ref(false);
 const sectorPorcentajeErrorEdicion = ref(false);
@@ -325,7 +336,22 @@ const validarFormulario = () => {
         return; // Detener el envío si hay errores
     }
 
-    guardarDatos(); // Llamar a la función original si todo está correcto
+    handleGetRegistros();
+
+    // guardarDatos();
+};
+
+// ✅ Función para realizar carga de pantalla de espera.
+const handleGetRegistros = async () => {
+  try {
+    loading.value = true; // Mostrar el spinner antes de la llamada API
+    loading_msg.value = 'Guardando datos, por favor espere...';
+      await guardarDatos(); // Llama a la función que obtiene los correos
+  } catch (error) {
+      console.error('Error al guardar información:', error);
+  } finally {
+    loading.value = false; // Oculta el spinner al finalizar la operación
+  }
 };
 
 const limpiar = () => {
@@ -437,7 +463,6 @@ const abrirModalEdicion = (registro) => {
 
 // ✅ Función para actualizar el registro
 const actualizarRegistro = async () => {
-    console.log(registroSeleccionado.value);
     try {
         const response = await axios.post(
             `${apiUrl}/actualizar_valores`, 
@@ -640,6 +665,19 @@ th {
 }
 .update-button:hover {
     background-color: #487223;
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7); /* Fondo oscuro */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999; /* Asegura que esté sobre todo */
 }
 
 .table-sectores {

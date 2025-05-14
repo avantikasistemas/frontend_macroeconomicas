@@ -19,7 +19,7 @@
                     <!-- SECTOR -->
                     <div class="form-group" :class="{ 'error': (!sector && mostrarErrores)}">
                         <label>Sector:</label>
-                        <select class="input-field" v-model="sector">
+                        <select class="input-field" v-model="sector" @change="onSectorChange">
                             <option :value="null">Seleccione...</option>
                             <option v-for="sec in list_sectores" :value="sec.concepto_12">{{ sec.descripcion }}</option>
                         </select>
@@ -27,13 +27,19 @@
                     </div>
 
                     <!-- SUBSECTOR -->
-                    <!-- <div class="form-group">
+                    <div class="form-group">
                         <label>Sub Sector:</label>
                         <select class="input-field" v-model="subsector">
                             <option :value="null">Seleccione...</option>
-                            <option v-for="sec in list_subsectores" :value="sec.concepto_12">{{ sec.descripcion }}</option>
+                            <option v-for="subs in list_subsector" :value="subs.id_subsector">{{ subs.subsector }}</option>
                         </select>
-                    </div> -->
+                    </div>
+
+                    <!-- NOMBRE --> 
+                    <div class="form-group">
+                      <label>Nombre:</label>
+                      <input type="text" class="input-field" v-model="nombre_tercero"/>
+                    </div>
                     <button type="submit" class="submit-button">Buscar</button>
                 </form>
             </div>
@@ -47,6 +53,7 @@
                         <tr>
                             <th>ID</th>
                             <th>AÑO</th>
+                            <th>NIT REAL</th>
                             <th>NIT</th>
                             <th>NOMBRE</th>
                             <th>PORCENTAJE (%)</th>
@@ -56,12 +63,13 @@
                     </thead>
                     <tbody>
                         <tr v-if="list_clientes.length === 0">
-                            <td colspan="5" class="no-registros">No hay registros disponibles</td>
+                            <td colspan="8" class="no-registros">No hay registros disponibles</td>
                         </tr>
                         <tr v-else v-for="reg in list_clientes" :key="reg.id">
                             <td>{{ reg.id }}</td>
                             <td>{{ reg.anio }}</td>
                             <td>{{ reg.nit_real }}</td>
+                            <td>{{ reg.nit }}</td>
                             <td>{{ reg.nombre }}</td>
                             <td>{{ reg.porcentaje_cliente }}%</td>
                             <td>{{ reg.created_at }}</td>
@@ -71,6 +79,47 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+            <div class="pagination" v-if="total_registros > 20">
+                <label for="records-per-page">Registros por página:</label>
+                <select 
+                    id="records-per-page" 
+                    v-model="limit" 
+                    @change="changePage(1)"
+                >
+                    <option value="50">50</option>
+                    <option value="75">75</option>
+                    <option value="100">100</option>
+                </select>
+                <button 
+                    :disabled="position <= 1" 
+                    @click="changePage(1)"
+                >
+                    Primera
+                </button>
+                
+                <button 
+                    :disabled="position <= 1" 
+                    @click="changePage(position - 1)"
+                >
+                    Anterior
+                </button>
+                
+                <span>Página {{ position }} de {{ total_paginas }}</span>
+                
+                <button 
+                    :disabled="position >= total_paginas" 
+                    @click="changePage(position + 1)"
+                >
+                    Siguiente
+                </button>
+                
+                <button 
+                    :disabled="position >= total_paginas" 
+                    @click="changePage(total_paginas)"
+                >
+                    Última
+                </button>
             </div>
         </div>
   
@@ -179,7 +228,7 @@ const router = useRouter();
 const anio = ref("");
 const sector = ref(null);
 const subsector = ref(null);
-const sector_porcentaje_response = ref(0);
+const nombre_tercero = ref(null);
 
 const modalInstance = ref(null);
 const modalErrorInstance = ref(null);
@@ -192,12 +241,16 @@ const mostrarErrores = ref(false);
 const anioError = ref(false);
 const sectorError = ref(false);
 const porcentajeErrorEdicion = ref(false);
-const lista_registros = ref([]);
 const list_anios = ref([]);
 const list_sectores = ref([]);
-const list_subsectores = ref([]);
 const list_clientes = ref([]);
+const list_subsector = ref([]);
 const registroSeleccionado = ref({});
+
+const total_paginas = ref(0);
+const total_registros = ref(0);
+const limit = ref(20);
+const position = ref(1);
 
 const obtenerAnios = async () => {
     try {
@@ -247,7 +300,11 @@ const obtenerclientes = async () => {
       `${apiUrl}/obtener_clientes`, 
       {
         anio: anio.value,
-        sector: sector.value
+        sector: sector.value,
+        subsector: subsector.value,
+        nombre_tercero: nombre_tercero.value,
+        limit: parseInt(limit.value),
+        position: parseInt(position.value),
       },
       {
           headers: {
@@ -257,7 +314,9 @@ const obtenerclientes = async () => {
     );
 
     if (response.status === 200) {
-        list_clientes.value = response.data.data;
+        list_clientes.value = response.data.data.registros;
+        total_paginas.value = response.data.data.total_pag;
+        total_registros.value = response.data.data.total_registros;
     }
   } catch (error) {
     console.error("Error al consultar los datos:", error);
@@ -283,6 +342,11 @@ const validarFormulario = () => {
 const abrirModalEdicion = (registro) => {
     registroSeleccionado.value = { ...registro }; // Clonar el registro seleccionado
     modalEditarInstance.value.show(); // Mostrar la modal de edición
+};
+
+const changePage = async (newPosition) => {
+  position.value = newPosition;
+  await obtenerclientes(); // Vuelve a cargar los datos con el nuevo límite y posición
 };
 
 function validarDecimalEdicion(campo) {
@@ -342,6 +406,42 @@ const actualizarRegistro = async () => {
         console.error("Error al actualizar el registro:", error);
         errorMsg.value = error.response?.data?.message || "Error al actualizar el registro.";
         modalErrorInstance.value.show();
+    }
+};
+
+
+const onSectorChange = async () => {
+    try {
+        // Carga de subsectores asociados al sector seleccionado
+        const response = await axios.post(
+            `${apiUrl}/get_subsector_by_sector`, 
+            { 
+                sector: sector.value 
+            },
+            {
+                headers: {
+                    Accept: "application/json"
+                }
+            }
+        );
+
+        if (response.status === 200) {
+            list_subsector.value = response.data.data || [];
+        }
+
+
+
+    } catch (error) {
+        console.error('Error al cargar datos dinámicos:', error);
+        modalErrorInstance.value.show();
+        errorMsg.value = error.response.data.message;
+        if (error.response.status === 401) {
+            token_status.value = error.response.status
+            errorMsg.value = error.response.data.detail;
+        } else if (error.response.status === 403) {
+            token_status.value = error.response.status
+            errorMsg.value = error.response.data.detail;
+        }
     }
 };
   
@@ -508,6 +608,56 @@ onMounted(() => {
   .update-button:hover {
       background-color: #487223;
   }
+
+  .pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 10px;
+  gap: 2px;
+  font-size: 142px; /* Reduce el tamaño de la fuente */
+  padding: 20px;
+}
+
+.pagination label {
+  margin-right: 10px;
+  font-size: 1rem;
+}
+
+.pagination select {
+  margin-right: 20px;
+  padding: 4px;
+  font-size: 0.8rem;
+  height: 30px;
+}
+
+.pagination button {
+  background-color: #679b3a;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  margin: 0 5px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  height: 30px;
+  transition: background 0.3s;
+}
+
+.pagination button:hover {
+  background-color: #487223;
+}
+
+
+.pagination button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.pagination span {
+  margin: 0 10px;
+  font-size: 1rem;
+}
   
   @media (max-width: 768px) {
       .form-group {

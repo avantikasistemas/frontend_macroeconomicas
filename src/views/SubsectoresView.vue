@@ -305,7 +305,6 @@ function validarDecimalEdicion(campo) {
 
 // ✅ Función para actualizar el registro
 const actualizarRegistro = async () => {
-
     try {
         const response = await axios.post(
             `${apiUrl}/actualizar_subsectores`, 
