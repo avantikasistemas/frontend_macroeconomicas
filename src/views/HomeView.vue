@@ -360,12 +360,23 @@ function validarDecimal(campo, permiteMayorCien) {
     crecimiento_avantika
   }[campo]
 
-  // Solo números y punto
-  valor.value = valor.value.replace(/[^0-9.]/g, '')
-
-  // Evita múltiples puntos
-  if ((valor.value.match(/\./g) || []).length > 1) {
-    valor.value = valor.value.substring(0, valor.value.length - 1)
+  // Permitir signo negativo solo para devaluacion
+  if (campo === 'devaluacion') {
+    // Solo números, punto y un posible signo negativo al inicio
+    valor.value = valor.value.replace(/(?!^)-|[^0-9\.-]/g, '');
+    // Solo un signo negativo al inicio
+    valor.value = valor.value.replace(/(?!^)-/g, '');
+    // Evita múltiples puntos
+    if ((valor.value.match(/\./g) || []).length > 1) {
+      valor.value = valor.value.substring(0, valor.value.length - 1)
+    }
+  } else {
+    // Solo números y punto
+    valor.value = valor.value.replace(/[^0-9.]/g, '')
+    // Evita múltiples puntos
+    if ((valor.value.match(/\./g) || []).length > 1) {
+      valor.value = valor.value.substring(0, valor.value.length - 1)
+    }
   }
 
   // Limita a 2 decimales
@@ -397,12 +408,19 @@ function validarDecimal(campo, permiteMayorCien) {
 function validarDecimalEdicion(campo, permiteMayorCien) {
     let valor = registroSeleccionado.value[campo];
 
-    // Solo números y punto
-    valor = valor.replace(/[^0-9.]/g, '');
-
-    // Evita múltiples puntos
-    if ((valor.match(/\./g) || []).length > 1) {
-        valor = valor.substring(0, valor.length - 1);
+    // Permitir signo negativo solo para devaluacion_proyectada
+    if (campo === 'devaluacion_proyectada') {
+        valor = valor.replace(/(?!^)-|[^0-9\.-]/g, '');
+        valor = valor.replace(/(?!^)-/g, '');
+        if ((valor.match(/\./g) || []).length > 1) {
+            valor = valor.substring(0, valor.length - 1);
+        }
+    } else {
+        // Solo números y punto
+        valor = valor.replace(/[^0-9.]/g, '');
+        if ((valor.match(/\./g) || []).length > 1) {
+            valor = valor.substring(0, valor.length - 1);
+        }
     }
 
     // Limita a 2 decimales
