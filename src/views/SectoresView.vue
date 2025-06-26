@@ -371,7 +371,7 @@ function validarDecimal(campo, permiteMayorCien) {
 
   // Evita múltiples puntos
   if ((valor.value.match(/\./g) || []).length > 1) {
-    valor.value = valor.value.substring(0, valor.value.length - 1)
+    valor.value = valor.substring(0, valor.length - 1)
   }
 
   // Limita a 2 decimales
@@ -401,12 +401,19 @@ function validarDecimal(campo, permiteMayorCien) {
 function validarDecimalEdicion(campo, permiteMayorCien) {
     let valor = registroSeleccionado.value[campo];
 
-    // Solo números y punto
-    valor = valor.replace(/[^0-9.]/g, '');
-
-    // Evita múltiples puntos
-    if ((valor.match(/\./g) || []).length > 1) {
-        valor = valor.substring(0, valor.length - 1);
+    // Permitir signo negativo solo para sector_porcentaje
+    if (campo === 'sector_porcentaje') {
+        valor = valor.replace(/(?!^)-|[^0-9\.-]/g, '');
+        valor = valor.replace(/(?!^)-/g, '');
+        if ((valor.match(/\./g) || []).length > 1) {
+            valor = valor.substring(0, valor.length - 1);
+        }
+    } else {
+        // Solo números y punto
+        valor = valor.replace(/[^0-9.]/g, '');
+        if ((valor.match(/\./g) || []).length > 1) {
+            valor = valor.substring(0, valor.length - 1);
+        }
     }
 
     // Limita a 2 decimales
@@ -433,12 +440,13 @@ function validarDecimalEdicion(campo, permiteMayorCien) {
     registroSeleccionado.value[campo] = valor;
 }
 
-// ✅ Validar que el porcentaje del sector permita solo números y hasta 2 decimales
+// ✅ Validar que el porcentaje del sector permita solo números, hasta 2 decimales y negativos
 const validarDecimalSector = (index) => {
   let valor = list_sectores.value[index].porcentaje_sector;
 
-  // Solo números y punto
-  valor = valor.replace(/[^0-9.]/g, '');
+  // Permitir signo negativo al inicio
+  valor = valor.replace(/(?!^)-|[^0-9\.-]/g, '');
+  valor = valor.replace(/(?!^)-/g, '');
 
   // Evita múltiples puntos
   if ((valor.match(/\./g) || []).length > 1) {
@@ -452,7 +460,7 @@ const validarDecimalSector = (index) => {
     valor = `${partes[0]}.${partes[1]}`;
   }
 
-  list_sectores.value[index].porcentaje_sector = valor || "0"; // Si está vacío, inicializar en 0
+  list_sectores.value[index].porcentaje_sector = valor || "0";
 };
 
 // ✅ Función para abrir el modal de edición

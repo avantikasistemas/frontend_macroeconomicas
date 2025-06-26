@@ -275,8 +275,9 @@ function validarDecimalEdicion(campo) {
 
     let valor = registroSeleccionado.value[campo];
 
-    // Solo números y punto
-    valor = valor.replace(/[^0-9.]/g, '');
+    // Permitir signo negativo al inicio
+    valor = valor.replace(/(?!^)-|[^0-9\.-]/g, '');
+    valor = valor.replace(/(?!^)-/g, '');
 
     // Evita múltiples puntos
     if ((valor.match(/\./g) || []).length > 1) {
