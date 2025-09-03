@@ -11,6 +11,7 @@
             <li><router-link :to="{ name: 'sectores'}"><i class="fa-regular fa-folder-open"></i> Sectores</router-link></li>
             <li><router-link :to="{ name: 'subsectores'}"><i class="fa-regular fa-folder-open"></i> Subsectores</router-link></li>
             <li><router-link :to="{ name: 'terceros'}"><i class="fa-regular fa-folder-open"></i> Terceros</router-link></li>
+            <li><router-link :to="{ name: 'punto-equilibrio'}"><i class="fa-regular fa-folder-open"></i> Punto de Equilibrio</router-link></li>
           </ul>
         </nav>
       </aside>

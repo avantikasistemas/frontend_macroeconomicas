@@ -3,6 +3,7 @@ import HomeView from '@/views/HomeView.vue';
 import SectoresView from '@/views/SectoresView.vue';
 import SubsectoresView from '@/views/SubsectoresView.vue';
 import TercerosView from '@/views/TercerosView.vue';
+import PuntoEquilibrioView from '@/views/PuntoEquilibrioView.vue';
  
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -11,6 +12,7 @@ const router = createRouter({
     {path: '/sectores', name: 'sectores', component: SectoresView},
     {path: '/subsectores', name: 'subsectores', component: SubsectoresView},
     {path: '/terceros', name: 'terceros', component: TercerosView},
+    {path: '/punto-equilibrio', name: 'punto-equilibrio', component: PuntoEquilibrioView},
   ]
 })
  
