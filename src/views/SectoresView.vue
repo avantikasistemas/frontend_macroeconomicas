@@ -130,14 +130,14 @@
                   </div>
                   <div class="modal-footer">
                       <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                      <button 
-                          type="button" 
-                          class="btn btn-primary update-button" 
-                          @click="actualizarRegistro"
-                          :disabled="sectorPorcentajeErrorEdicion || !registroSeleccionado.sector_porcentaje"
-                      >
-                          Actualizar
-                      </button>
+                          <button 
+                              type="button" 
+                              class="btn btn-primary update-button" 
+                              @click="actualizarRegistro"
+                              :disabled="sectorPorcentajeErrorEdicion || hitrateErrorEdicion"
+                          >
+                              Actualizar
+                          </button>
                   </div>
               </div>
           </div>
