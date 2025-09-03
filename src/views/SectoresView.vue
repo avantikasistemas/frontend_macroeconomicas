@@ -1,7 +1,6 @@
 <template>
   <LayoutView>
       <h3>Sectores</h3>
-
       <div class="container">
           <div class="form-container">
               <form class="form-flex">
@@ -12,7 +11,6 @@
                         <option :value="null">Seleccione...</option>
                         <option v-for="an in list_anios_para_sectores" :value="an.anio">{{ an.anio }}</option>
                     </select>
-                    <p v-if="!anio && mostrarErrores" class="error-text">Este campo es obligatorio.</p>
                     <p v-if="anio" class="info-text">Crecimiento Avantika: {{ crecimientoSeleccionado }}%</p>
                   </div>
               </form>
@@ -26,6 +24,7 @@
                         <tr>
                         <th>Descripción</th>
                         <th>Porcentaje Sector (%)</th>
+                        <th>HitRate (%)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -36,7 +35,15 @@
                                 type="text" 
                                 class="input-field" 
                                 v-model="sector.porcentaje_sector" 
-                                @input="validarDecimalSector(index)" 
+                                @input="validarDecimalSector(index, 'porcentaje_sector')" 
+                                />
+                            </td>
+                            <td>
+                                <input 
+                                type="text" 
+                                class="input-field" 
+                                v-model="sector.hitrate" 
+                                @input="validarDecimalSector(index, 'hitrate')" 
                                 />
                             </td>
                         </tr>
@@ -56,6 +63,7 @@
                           <th>AÑO</th>
                           <th>SECTOR</th>
                           <th>SECTOR (%)</th>
+                          <th>HITRATE (%)</th>
                           <th>FECHA CREACIÓN</th>
                           <th>ACCIONES</th>
                       </tr>
@@ -69,6 +77,7 @@
                           <td>{{ reg.anio }}</td>
                           <td>{{ reg.sector_nombre }}</td>
                           <td>{{ reg.sector_porcentaje }}%</td>
+                          <td>{{ reg.hitrate }}%</td>
                           <td>{{ reg.created_at }}</td>
                           <td style="text-align: center;">
                               <i class="fa-regular fa-clipboard" style="cursor: pointer;" @click="abrirModalEdicion(reg)"></i>
@@ -106,6 +115,16 @@
                                   @input="validarDecimalEdicion('sector_porcentaje', false)" 
                               />
                               <p v-if="sectorPorcentajeErrorEdicion" class="error-text">Debe ser un número menor o igual a 100 con máximo 2 decimales.</p>
+                          </div>
+                          <div class="form-group" :class="{ 'error': hitrateErrorEdicion }">
+                              <label>HitRate (%):</label>
+                              <input 
+                                  type="text" 
+                                  class="input-field" 
+                                  v-model="registroSeleccionado.hitrate" 
+                                  @input="validarDecimalEdicion('hitrate', false)" 
+                              />
+                              <p v-if="hitrateErrorEdicion" class="error-text">Debe ser un número menor o igual a 100 con máximo 2 decimales.</p>
                           </div>
                       </form>
                   </div>
@@ -182,10 +201,6 @@ import { Modal } from 'bootstrap';
 const router = useRouter();
 
 const anio = ref(null);
-const crecimiento_avantika = ref("");
-const sector = ref("");
-const sector_porcentaje = ref("");
-const data_ultimo_anio = ref({});
 
 const modalInstance = ref(null);
 const modalErrorInstance = ref(null);
@@ -196,9 +211,6 @@ const errorMsg = ref("");
 const mostrarErrores = ref(false);
 
 const anioError = ref(false);
-const crecimiento_avantikaError = ref(false)
-const sectorError = ref(false)
-const sector_porcentajeError = ref(false)
 const lista_registros = ref([]);
 const list_sectores = ref([]);
 const list_anios_para_sectores = ref([]);
@@ -207,8 +219,8 @@ const registroSeleccionado = ref({});
 const loading = ref(false);
 const loading_msg = ref('');
 
-const crecimientoAvantikaErrorEdicion = ref(false);
 const sectorPorcentajeErrorEdicion = ref(false);
+const hitrateErrorEdicion = ref(false);
 
 const crecimientoSeleccionado = computed(() => {
   const seleccionado = list_anios_para_sectores.value.find(item => item.anio === anio.value);
@@ -281,14 +293,14 @@ const cargarDatos = async () => {
 // ✅ Función para guardar la información
 const guardarDatos = async () => {
     // Mostrar en consola el año seleccionado y el listado de sectores
-    console.log(crecimientoSeleccionado.value);
     try {
         const response = await axios.post(
             `${apiUrl}/guardar_valores`, {
                 anio: anio.value,
                 sectores: list_sectores.value.map(sector => ({
                     concepto: sector.concepto_12,
-                    porcentaje: sector.porcentaje_sector
+                    porcentaje: sector.porcentaje_sector,
+                    hitrate: sector.hitrate
                 })),
                 crecimiento_avantika: crecimientoSeleccionado.value
             },
@@ -313,18 +325,14 @@ const guardarDatos = async () => {
     }
 };
 
-const validarAnio = () => {
-  // Elimina cualquier caracter no numérico
-  anio.value = anio.value.replace(/\D/g, '');
-
-  // Verifica rango solo si tiene 4 dígitos
-  if (anio.value.length === 4) {
-    const valor = parseInt(anio.value, 10);
-    anioError.value = !(valor >= 2024 && valor <= 2200);
-  } else {
-    anioError.value = false;
-  }
-};
+// Inicializar el hitrate en 0 para cada sector
+watch(list_sectores, (newList) => {
+    newList.forEach(sector => {
+        if (sector.hitrate === undefined) {
+            sector.hitrate = "0";
+        }
+    });
+});
 
 // ✅ Función para validar el formulario antes de enviar
 const validarFormulario = () => {
@@ -337,8 +345,6 @@ const validarFormulario = () => {
     }
 
     handleGetRegistros();
-
-    // guardarDatos();
 };
 
 // ✅ Función para realizar carga de pantalla de espera.
@@ -359,50 +365,11 @@ const limpiar = () => {
   mostrarErrores.value = false;
 };
 
-function validarDecimal(campo, permiteMayorCien) {
-  let valor = {
-    crecimiento_avantika,
-    sector,
-    sector_porcentaje,
-  }[campo]
-
-  // Solo números y punto
-  valor.value = valor.value.replace(/[^0-9.]/g, '')
-
-  // Evita múltiples puntos
-  if ((valor.value.match(/\./g) || []).length > 1) {
-    valor.value = valor.substring(0, valor.length - 1)
-  }
-
-  // Limita a 2 decimales
-  const partes = valor.value.split('.')
-  if (partes.length === 2 && partes[1].length > 2) {
-    partes[1] = partes[1].substring(0, 2)
-    valor.value = `${partes[0]}.${partes[1]}`
-  }
-
-  // Validación de límite (excepto para devaluación)
-  const num = parseFloat(valor.value)
-  const errorRef = {
-    crecimiento_avantika: crecimiento_avantikaError,
-    sector: sectorError,
-    sector_porcentaje: sector_porcentajeError
-  }[campo]
-
-  if (!valor.value) {
-    errorRef.value = false
-  } else if (isNaN(num) || (!permiteMayorCien && num > 100)) {
-    errorRef.value = true
-  } else {
-    errorRef.value = false
-  }
-}
-
 function validarDecimalEdicion(campo, permiteMayorCien) {
     let valor = registroSeleccionado.value[campo];
 
-    // Permitir signo negativo solo para sector_porcentaje
-    if (campo === 'sector_porcentaje') {
+    // Permitir signo negativo solo para sector_porcentaje y hitrate
+    if (campo === 'sector_porcentaje' || campo === 'hitrate') {
         valor = valor.replace(/(?!^)-|[^0-9\.-]/g, '');
         valor = valor.replace(/(?!^)-/g, '');
         if ((valor.match(/\./g) || []).length > 1) {
@@ -426,7 +393,8 @@ function validarDecimalEdicion(campo, permiteMayorCien) {
     // Validación de límite
     const num = parseFloat(valor);
     const errorRef = {
-        sector_porcentaje: sectorPorcentajeErrorEdicion
+        sector_porcentaje: sectorPorcentajeErrorEdicion,
+        hitrate: hitrateErrorEdicion
     }[campo];
 
     if (!valor) {
@@ -440,27 +408,27 @@ function validarDecimalEdicion(campo, permiteMayorCien) {
     registroSeleccionado.value[campo] = valor;
 }
 
-// ✅ Validar que el porcentaje del sector permita solo números, hasta 2 decimales y negativos
-const validarDecimalSector = (index) => {
-  let valor = list_sectores.value[index].porcentaje_sector;
+// ✅ Validar que el porcentaje del sector y el hitrate permitan solo números, hasta 2 decimales y negativos
+const validarDecimalSector = (index, campo = 'porcentaje_sector') => {
+    let valor = list_sectores.value[index][campo];
 
-  // Permitir signo negativo al inicio
-  valor = valor.replace(/(?!^)-|[^0-9\.-]/g, '');
-  valor = valor.replace(/(?!^)-/g, '');
+    // Permitir signo negativo al inicio
+    valor = valor.replace(/(?!^)-|[^0-9\.-]/g, '');
+    valor = valor.replace(/(?!^)-/g, '');
 
-  // Evita múltiples puntos
-  if ((valor.match(/\./g) || []).length > 1) {
-    valor = valor.substring(0, valor.length - 1);
-  }
+    // Evita múltiples puntos
+    if ((valor.match(/\./g) || []).length > 1) {
+        valor = valor.substring(0, valor.length - 1);
+    }
 
-  // Limita a 2 decimales
-  const partes = valor.split('.');
-  if (partes.length === 2 && partes[1].length > 2) {
-    partes[1] = partes[1].substring(0, 2);
-    valor = `${partes[0]}.${partes[1]}`;
-  }
+    // Limita a 2 decimales
+    const partes = valor.split('.');
+    if (partes.length === 2 && partes[1].length > 2) {
+        partes[1] = partes[1].substring(0, 2);
+        valor = `${partes[0]}.${partes[1]}`;
+    }
 
-  list_sectores.value[index].porcentaje_sector = valor || "0";
+    list_sectores.value[index][campo] = valor || "0";
 };
 
 // ✅ Función para abrir el modal de edición
