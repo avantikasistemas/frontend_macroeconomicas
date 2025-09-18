@@ -23,8 +23,8 @@
                     <thead>
                         <tr>
                         <th>Descripción</th>
-                        <th>Porcentaje Sector (%)</th>
-                        <th>HitRate (%)</th>
+                        <th>Porcentaje de crecimiento Proyectado del Sector (%)</th>
+                        <th>Porcentaje de crecimiento Proyectado del HitRate (%)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -657,8 +657,7 @@ th {
 }
 
 .table-sectores {
-    max-width: 30%; /* Ajusta este valor entre 30% y 40% según tu preferencia */
-    
+    max-width: 50%; /* Ajusta este valor entre 30% y 40% según tu preferencia */
 }
 
 .table-sectores table {
