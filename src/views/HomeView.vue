@@ -208,7 +208,7 @@
 
 <script setup>
 import apiUrl from "../../config.js";
-import LayoutView from '../views/Layouts/LayoutView.vue';
+import LayoutView from './Layouts/LayoutView.vue';
 import { ref, onMounted, watch, computed } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
