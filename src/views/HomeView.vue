@@ -1,5 +1,5 @@
 <template>
-  <LayoutView>
+  <PanelView>
       <h3>Cargue de Variables Macroeconómicas</h3>
 
       <div class="container">
@@ -203,13 +203,13 @@
           </div>
       </div>
       
-  </LayoutView>
+  </PanelView>
 </template>
 
 <script setup>
 import apiUrl from "../../config.js";
-import LayoutView from "./Layouts/LayoutView.vue";
-import { ref, onMounted, watch, computed } from "vue";
+import PanelView from "./Layouts/PanelView.vue";
+import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
 import { Modal } from 'bootstrap';

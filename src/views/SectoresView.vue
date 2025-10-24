@@ -1,5 +1,5 @@
 <template>
-  <LayoutView>
+  <PanelView>
       <h3>Sectores</h3>
       <div class="container">
           <div class="form-container">
@@ -187,12 +187,12 @@
         <p class="mt-2 text-light">{{ loading_msg }}</p>
     </div>
       
-  </LayoutView>
+  </PanelView>
 </template>
 
 <script setup>
 import apiUrl from "../../config.js";
-import LayoutView from './Layouts/LayoutView.vue';
+import PanelView from './Layouts/PanelView.vue';
 import { ref, onMounted, watch, computed } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
